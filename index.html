@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Morp-ios</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Morp-ios">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0c0f;
+      color: #b3e5fc;
+      font-family: 'Courier New', monospace;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #app {
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    header {
+      border-bottom: 2px solid #00e5ff;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      letter-spacing: 1.5px;
+      color: #00e5ff;
+      text-shadow: 0 0 8px #00e5ff55;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #subname-tag {
+      color: #ffd740;
+      font-size: 0.85rem;
+      font-weight: bold;
+      background: #1e2a30;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #ffd74044;
+    }
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .header-btn {
+      background: #1e2a30;
+      color: #00e5ff;
+      border: 1px solid #00e5ff44;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.7rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .header-btn:hover {
+      background: #00e5ff22;
+      border-color: #00e5ff;
+    }
+    .header-btn.active-audio {
+      background: #00e5ff33;
+      border-color: #00e5ff;
+      color: #ffd740;
+      box-shadow: 0 0 8px #00e5ff66;
+    }
+    #archetype-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 0 8px 0;
+      margin-bottom: 8px;
+      scrollbar-width: thin;
+    }
+    .chip {
+      background: #111418;
+      border: 1px solid #1e2a30;
+      color: #00e5ff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .chip.active {
+      background: #00e5ff22;
+      border-color: #00e5ff;
+      color: #ffd740;
+      font-weight: bold;
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      background: #111418;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #1e2a30;
+      min-height: 300px;
+      max-height: 60vh;
+    }
+    .msg {
+      margin-bottom: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== GLITCH CON CANAL RGB DISTORTION ===== */
+    @keyframes glitchStatic {
+      0% { transform: translate(0,0) skew(0deg); filter: hue-rotate(0deg); text-shadow: none; }
+      15% { transform: translate(-4px,2px) skew(-3deg); filter: hue-rotate(90deg); text-shadow: -3px 0 #00e5ff, 3px 0 #ff007f; box-shadow: -4px 0 15px #00e5ff, 4px 0 15px #ff007f; }
+      30% { transform: translate(3px,-2px) skew(3deg); filter: hue-rotate(-90deg); text-shadow: 3px 0 #00e5ff, -3px 0 #ff007f; }
+      45% { transform: translate(-3px,-1px) skew(-1deg); filter: contrast(180%) brightness(130%); text-shadow: -2px 1px #00e5ff, 2px -1px #ff007f; }
+      60% { transform: translate(2px,2px) skew(2deg); filter: opacity(0.85); text-shadow: 2px 0 #00e5ff, -2px 0 #ff007f; }
+      75% { transform: translate(-2px,1px) skew(-2deg); filter: hue-rotate(180deg); text-shadow: -3px -1px #00e5ff, 3px 1px #ff007f; }
+      90% { transform: translate(1px,-1px) skew(0deg); filter: contrast(160%); text-shadow: 1px 0 #00e5ff, -1px 0 #ff007f; }
+      100% { transform: translate(0,0) skew(0deg); filter: none; text-shadow: none; }
+    }
+
+    @keyframes screenFlicker {
+      0% { opacity: 1; filter: none; }
+      15% { opacity: 0.85; filter: invert(0.2) hue-rotate(120deg); }
+      30% { opacity: 0.95; filter: contrast(180%); }
+      45% { opacity: 0.75; filter: invert(0.3) sepia(0.8); }
+      60% { opacity: 0.9; filter: none; }
+      75% { opacity: 0.85; filter: contrast(140%) brightness(120%); }
+      100% { opacity: 1; filter: none; }
+    }
+
+    @keyframes scanlineMove {
+      0% { top: -20%; }
+      100% { top: 110%; }
+    }
+
+    .glitch-effect {
+      animation: glitchStatic 0.55s ease-in-out 2;
+      border-left: 3px solid #ff007f !important;
+      background: #151a21 !important;
+      box-shadow: 0 0 15px rgba(0,229,255,0.35), inset 0 0 10px rgba(255,0,127,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glitch-effect::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: linear-gradient(180deg, transparent, rgba(0,229,255,0.5), rgba(255,0,127,0.7), transparent);
+      opacity: 0.6;
+      pointer-events: none;
+      animation: scanlineMove 0.8s linear infinite;
+    }
+
+    .screen-flicker {
+      animation: screenFlicker 0.65s ease-in-out;
+    }
+
+    /* Scare Toast Alert */
+    #scare-alert {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff007f;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 20px #ff007f, 0 0 10px #00e5ff;
+      z-index: 100;
+      display: none;
+      animation: glitchStatic 0.4s ease-in-out infinite;
+      text-align: center;
+    }
+
+    .msg.user { color: #aed581; text-align: right; }
+    .msg.morp { color: #b3e5fc; text-align: left; position: relative; overflow: hidden; }
+    .msg.system {
+      color: #b0bec5;
+      font-style: italic;
+      border-left: 3px solid #78909c;
+      padding-left: 10px;
+      background: #121920;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    .msg.morp .morp-header {
+      font-size: 0.75rem;
+      color: #00e5ff;
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .msg.morp .mission-card {
+      background: #1a232b;
+      border-left: 4px solid #ffd740;
+      padding: 10px 12px;
+      margin: 8px 0;
+      border-radius: 0 8px 8px 0;
+      color: #eee;
+      font-family: 'Courier New', monospace;
+      text-align: left;
+    }
+    .msg.morp .mission-card strong { color: #ffd740; }
+    .termux-btn {
+      display: inline-block;
+      margin-top: 6px;
+      background: #00e5ff15;
+      border: 1px solid #00e5ff66;
+      color: #00e5ff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .termux-btn:hover { background: #00e5ff33; }
+    .speech-btn {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .speech-btn:hover { color: #ffd740; }
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      padding: 6px 12px;
+      background: #1a232b;
+      border-radius: 12px;
+      color: #ffd740;
+      font-size: 0.8rem;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #ffd740;
+      border-radius: 50%;
+      animation: blink 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+    #input-area {
+      display: flex;
+      gap: 8px;
+      background: #111418;
+      padding: 8px;
+      border-radius: 40px;
+      border: 1px solid #1e2a30;
+    }
+    #prompt {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #b3e5fc;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      padding: 8px 12px;
+      outline: none;
+    }
+    #prompt::placeholder { color: #3a4a55; }
+    #send {
+      background: #00e5ff;
+      border: none;
+      color: #0a0c0f;
+      font-weight: bold;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    #send:active { transform: scale(0.94); opacity: 0.7; }
+    #status {
+      margin-top: 8px;
+      font-size: 0.7rem;
+      color: #3a4a55;
+      text-align: center;
+    }
+
+    /* ===== RPG PROGRESS BAR & LEVEL BADGE ===== */
+    #rpg-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #11161d;
+      border: 1px solid #1e2a30;
+      padding: 6px 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    .rpg-level-badge {
+      background: linear-gradient(135deg, #ffd740, #ff8f00);
+      color: #0a0c0f;
+      font-weight: bold;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(255, 215, 64, 0.4);
+      white-space: nowrap;
+    }
+    .xp-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: #1a232b;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #00e5ff33;
+      position: relative;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00e5ff, #00ff87);
+      box-shadow: 0 0 10px #00e5ff88;
+      transition: width 0.4s ease-out;
+    }
+    .xp-bar-text {
+      font-size: 0.7rem;
+      color: #88a0b0;
+      white-space: nowrap;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    /* ===== TITLE BADGE (NOMBRAMIENTO) ===== */
+    .title-badge {
+      font-size: 0.75rem;
+      color: #00ff87;
+      background: #003322;
+      border: 1px solid #00ff8755;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+
+    /* ===== MODALS: ÁLBUM DE ESTAMPAS & MISIONES/TROFEOS ===== */
+    .game-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 12, 15, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 1100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .game-modal-overlay.active {
+      display: flex;
+    }
+    .game-modal {
+      background: #11161d;
+      color: #b3e5fc;
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      border-radius: 16px;
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .game-modal-header {
+      background: #182029;
+      padding: 12px 18px;
+      border-bottom: 1px solid #1e2a30;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .game-modal-title {
+      font-size: 1.05rem;
+      color: #00e5ff;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .game-modal-close {
+      background: #24323d;
+      border: none;
+      color: #88a0b0;
+      font-size: 1.1rem;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.2s;
+    }
+    .game-modal-close:hover {
+      background: #00e5ff33;
+      color: #00e5ff;
+    }
+    .modal-tabs {
+      display: flex;
+      background: #0d1117;
+      border-bottom: 1px solid #1e2a30;
+      overflow-x: auto;
+    }
+    .modal-tab {
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      color: #88a0b0;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .modal-tab.active {
+      color: #ffd740;
+      border-bottom-color: #ffd740;
+      background: #182029;
+      font-weight: bold;
+    }
+    .game-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* GRID DE ESTAMPAS (ÁLBUM DE COLECCIÓN) */
+    .stamps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .stamp-card {
+      background: #18202b;
+      border: 1px solid #283845;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stamp-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+    }
+    .stamp-card.locked {
+      opacity: 0.5;
+      filter: grayscale(80%);
+      border-style: dashed;
+    }
+    .stamp-rarity {
+      font-size: 0.65rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      margin-bottom: 6px;
+    }
+    .rarity-comun { background: #2a3a48; color: #b0bec5; }
+    .rarity-raro { background: #004d40; color: #80cbd3; border: 1px solid #00897b; }
+    .rarity-epico { background: #4a148c; color: #e1bee7; border: 1px solid #8e24aa; }
+    .rarity-legendario { background: #7f0000; color: #ff8a80; border: 1px solid #ff1744; box-shadow: 0 0 8px #ff007faa; }
+
+    .stamp-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #ffd740;
+      margin-bottom: 6px;
+    }
+    .stamp-quote {
+      font-size: 0.75rem;
+      color: #d1ecf1;
+      font-style: italic;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    /* MISIONES LIST & TROFEO BADGES */
+    .mission-item {
+      background: #18202b;
+      border: 1px solid #283845;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .mission-info h4 {
+      font-size: 0.9rem;
+      color: #00e5ff;
+      margin-bottom: 4px;
+    }
+    .mission-info p {
+      font-size: 0.75rem;
+      color: #a0b0c0;
+    }
+    .mission-reward {
+      font-size: 0.72rem;
+      color: #ffd740;
+      margin-top: 4px;
+    }
+    .mission-btn {
+      background: #00e5ff;
+      color: #0a0c0f;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .mission-btn:disabled {
+      background: #283845;
+      color: #607080;
+      cursor: not-allowed;
+    }
+
+    /* MEDALLAS ESTILO POKÉMON (ROUND SHINY TROPHIES) */
+    .trophies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+      text-align: center;
+    }
+    .trophy-badge {
+      background: #18202b;
+      border: 1px solid #283845;
+      border-radius: 16px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .trophy-badge.locked {
+      opacity: 0.4;
+      filter: grayscale(100%);
+    }
+    .trophy-icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffd740, #ff8f00, #b71c1c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      box-shadow: 0 0 12px rgba(255, 215, 64, 0.5), inset 0 2px 4px rgba(255,255,255,0.6);
+      border: 2px solid #ffffffaa;
+    }
+    .trophy-name {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #ffd740;
+    }
+
+    /* TITLES (NOMBRAMIENTOS) LIST */
+    .title-item {
+      background: #18202b;
+      border: 1px solid #283845;
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title-name {
+      font-size: 0.85rem;
+      color: #00ff87;
+      font-weight: bold;
+    }
+
+    /* TOAST NOTIFICATION FLOATING */
+    #toast-notification {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #00ff87;
+      color: #0a0c0f;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 0.82rem;
+      box-shadow: 0 0 20px #00ff87aa;
+      z-index: 2000;
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* ===== MODAL: HALL OF MATRIX / EL CUARTO BLANCO DEL ORÁCULO ===== */
+    .oracle-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 12, 15, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .oracle-modal-overlay.active {
+      display: flex;
+    }
+    .oracle-modal {
+      background: #f0f4f8;
+      color: #1a202c;
+      width: 100%;
+      max-width: 680px;
+      height: 85vh;
+      border-radius: 16px;
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 30px rgba(0,229,255,0.4), 0 0 50px rgba(255,255,255,0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .oracle-header {
+      background: #ffffff;
+      padding: 14px 18px;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .oracle-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .oracle-title span {
+      font-size: 0.75rem;
+      background: #8b0000;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .oracle-close-btn {
+      background: #e2e8f0;
+      border: none;
+      color: #334155;
+      font-size: 1.1rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .oracle-close-btn:hover {
+      background: #cbd5e1;
+      color: #0f172a;
+    }
+    .oracle-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .oracle-msg {
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.5;
+      font-size: 0.92rem;
+      max-width: 88%;
+      white-space: pre-wrap;
+    }
+    .oracle-msg.oracle-ai {
+      background: #ffffff;
+      color: #0f172a;
+      border-left: 4px solid #8b0000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      align-self: flex-start;
+    }
+    .oracle-msg.oracle-user {
+      background: #0284c7;
+      color: #ffffff;
+      align-self: flex-end;
+    }
+    .oracle-input-area {
+      padding: 12px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 8px;
+    }
+    .oracle-input {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .oracle-input:focus {
+      border-color: #0284c7;
+      background: #ffffff;
+    }
+    .oracle-send-btn {
+      background: #8b0000;
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .oracle-send-btn:hover {
+      background: #a00000;
+    }
+
+    /* ===== MODAL: MODO HISTORIA (EL VIAJE DEL HÉROE - SIMULADOR SIGN/TELLTALE) ===== */
+    .story-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 12, 15, 0.92);
+      backdrop-filter: blur(10px);
+      z-index: 1050;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .story-modal-overlay.active {
+      display: flex;
+    }
+    .story-modal {
+      background: #0d131a;
+      color: #e2e8f0;
+      width: 100%;
+      max-width: 720px;
+      height: 88vh;
+      border-radius: 16px;
+      border: 2px solid #00ff87;
+      box-shadow: 0 0 30px rgba(0,255,135,0.25), 0 0 60px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .story-header {
+      background: #141c26;
+      padding: 12px 18px;
+      border-bottom: 1px solid #233242;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .story-title {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #00ff87;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .story-phase-bar {
+      background: #141f2d;
+      padding: 8px 16px;
+      border-bottom: 1px solid #1e2c3d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #88a0b0;
+    }
+    .story-phase-badge {
+      background: #00ff8722;
+      color: #00ff87;
+      border: 1px solid #00ff8755;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .story-meta-box {
+      background: #182433;
+      padding: 10px 16px;
+      border-bottom: 1px solid #233448;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .story-meta-box input {
+      flex: 1;
+      background: #0f1823;
+      border: 1px solid #2b3d52;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .story-meta-box input:focus {
+      border-color: #00ff87;
+    }
+    .story-chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: radial-gradient(circle at 50% 50%, #111a24 0%, #0a0e14 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .story-msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      line-height: 1.5;
+      font-size: 0.9rem;
+      position: relative;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .story-msg.archetype-msg {
+      background: #1a2636;
+      border: 1px solid #2c3e54;
+      color: #e2e8f0;
+      align-self: flex-start;
+      border-top-left-radius: 2px;
+    }
+    .story-msg.hero-msg {
+      background: #00897b;
+      color: #ffffff;
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+    }
+    .story-msg-sender {
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #00e5ff;
+      margin-bottom: 4px;
+    }
+    .story-choices-container {
+      padding: 14px;
+      background: #141c26;
+      border-top: 1px solid #233242;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .story-choice-btn {
+      background: #1b2838;
+      color: #00ff87;
+      border: 1px solid #00ff8755;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .story-choice-btn:hover {
+      background: #00ff8722;
+      border-color: #00ff87;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="scare-alert">⚠️ ¡ANOMALÍA EN LA MATRIZ DETECTADA!<br><span style="font-size:0.7rem; font-weight:normal;">[Interferencia Cuántica en Morp-ios]</span></div>
+
+  <header>
+    <h1>⏣ Morp-ios <span id="subname-tag">· kai9000</span> <span id="user-title-tag" class="title-badge">[Iniciado]</span></h1>
+    <div class="header-actions">
+      <button id="story-btn" class="header-btn" title="El Viaje del Héroe: Aventura Interactiva" aria-label="Modo Historia">🎬 Modo Historia</button>
+      <button id="album-btn" class="header-btn" title="Álbum de Estampas y Frases Coleccionables" aria-label="Ver Álbum">📖 Álbum</button>
+      <button id="missions-btn" class="header-btn" title="Misiones, Trofeos y Nombramientos" aria-label="Ver Misiones">🎯 Misiones</button>
+      <button id="oracle-btn" class="header-btn" title="Entrar al Hall de la Matrix / El Oráculo Directo" aria-label="Ver Oráculo">🏛️ Oráculo (Hall)</button>
+      <button id="music-btn" class="header-btn" title="Música de ambiente Cyberpunk/Zen (Web Audio API)" aria-label="Música Ambiental">🎵 Música: OFF</button>
+      <button id="subname-btn" class="header-btn" title="Editar Subnombre de la app" aria-label="Editar Subnombre">🏷️ Subnombre</button>
+      <button id="dumpsys-btn" class="header-btn" title="Exportar Reporte Cognitivo B2B Local" aria-label="Exportar Dumpsys">📊 Dumpsys</button>
+      <button id="reset-btn" class="header-btn" title="Reiniciar conversación (borra historial)" aria-label="Reiniciar Chat">🔄 Reset</button>
+      <button id="apikey-btn" class="header-btn" title="Configurar API Key" aria-label="Configurar API Key">🔑 API Key</button>
+      <button id="install-btn" class="header-btn" style="display:none;" aria-label="Instalar App">📲 Instalar</button>
+    </div>
+  </header>
+
+  <!-- BARRA DE EXPERIENCIA RPG -->
+  <div id="rpg-container">
+    <div id="rpg-level-badge" class="rpg-level-badge">Nvl 1</div>
+    <div class="xp-bar-bg">
+      <div id="xp-bar-fill" class="xp-bar-fill"></div>
+    </div>
+    <div id="xp-bar-text" class="xp-bar-text">0 / 100 XP</div>
+  </div>
+
+  <!-- Canal de Arquetipos rápidos -->
+  <div id="archetype-chips">
+    <div class="chip active" data-arch="">⛩️ Todos</div>
+    <div class="chip" data-arch="Umbral">⛩️ Umbral</div>
+    <div class="chip" data-arch="Sibila">🔮 Sibila</div>
+    <div class="chip" data-arch="Azoth">🧪 Azoth</div>
+    <div class="chip" data-arch="Dédalo">🏛️ Dédalo</div>
+    <div class="chip" data-arch="Aqua">🌊 Aqua</div>
+    <div class="chip" data-arch="Elios">☀️ Elios</div>
+    <div class="chip" data-arch="Xiphos">⚔️ Xiphos</div>
+    <div class="chip" data-arch="Tejedor">🕸️ Tejedor</div>
+    <div class="chip" data-arch="Jardinero">🌱 Jardinero</div>
+  </div>
+
+  <div id="chat"></div>
+
+  <div id="input-area">
+    <input type="text" id="prompt" placeholder="Escribe tu consulta o /help para comandos..." autofocus>
+    <button id="send">➤</button>
+  </div>
+  <div id="status">⚡ listo · memoria local activa</div>
+</div>
+
+<!-- MODAL: HALL OF MATRIX / EL CUARTO BLANCO DEL ORÁCULO -->
+<div id="oracle-modal-overlay" class="oracle-modal-overlay">
+  <div class="oracle-modal">
+    <div class="oracle-header">
+      <div class="oracle-title">
+        🏛️ El Oráculo <span>Hall of Matrix</span>
+      </div>
+      <button id="close-oracle-btn" class="oracle-close-btn" title="Cerrar Oráculo">✕</button>
+    </div>
+
+    <!-- INSERTE AQUÍ SOULCORE ORÁCULO DIRIGIDO PARA EL METAMORP -->
+
+    <div id="oracle-chat-body" class="oracle-body">
+      <div class="oracle-msg oracle-ai">
+        ☕ <strong>El Oráculo:</strong> Te estaba esperando en el Constructo Blanco. Toma una galleta. En este espacio no hay historias, puntos ni misiones; solo la búsqueda pura de la verdad. ¿Qué pregunta necesitas resolver hoy?
+      </div>
+    </div>
+
+    <div class="oracle-input-area">
+      <input type="text" id="oracle-input" class="oracle-input" placeholder="Pregunta directamente al Oráculo sin rodeos..." autofocus>
+      <button id="oracle-send-btn" class="oracle-send-btn">Consultar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ÁLBUM DE ESTAMPAS Y FRASES COLECCIONABLES -->
+<div id="album-modal-overlay" class="game-modal-overlay">
+  <div class="game-modal">
+    <div class="game-modal-header">
+      <div class="game-modal-title">📖 Álbum Coleccionador de Sabiduría</div>
+      <button id="close-album-btn" class="game-modal-close">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-tab="all">Todas</div>
+      <div class="modal-tab" data-tab="galleta">🥠 Galletas</div>
+      <div class="modal-tab" data-tab="tao">☯️ Tao</div>
+      <div class="modal-tab" data-tab="alquimia">🧪 Alquimia</div>
+      <div class="modal-tab" data-tab="matrix">🕶️ Matrix</div>
+    </div>
+    <div id="album-stamps-body" class="game-modal-body stamps-grid">
+      <!-- Inyectado dinámicamente por JS -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MISIONES, TROFEOS Y NOMBRAMIENTOS (RPG) -->
+<div id="missions-modal-overlay" class="game-modal-overlay">
+  <div class="game-modal">
+    <div class="game-modal-header">
+      <div class="game-modal-title">🎯 Centro de Progreso & Nombramientos</div>
+      <button id="close-missions-btn" class="game-modal-close">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div id="tab-missions-btn" class="modal-tab active" data-sec="missions">🎯 Misiones</div>
+      <div id="tab-trophies-btn" class="modal-tab" data-sec="trophies">🏆 Trofeos</div>
+      <div id="tab-titles-btn" class="modal-tab" data-sec="titles">🎖️ Nombramientos</div>
+    </div>
+    <div id="missions-modal-body" class="game-modal-body">
+      <!-- Inyectado dinámicamente por JS -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MODO HISTORIA (EL VIAJE DEL HÉROE - SIMULADOR SIGN / TELLTALE) -->
+<div id="story-modal-overlay" class="story-modal-overlay">
+  <div class="story-modal">
+    <div class="story-header">
+      <div class="story-title">
+        🎬 El Viaje del Héroe <span style="font-size:0.75rem; color:#88a0b0; font-weight:normal;">(Simulador de Lore Interactivo)</span>
+      </div>
+      <div>
+        <button id="restart-story-btn" class="header-btn" style="margin-right:8px;" title="Reiniciar Historia">🔄 Reiniciar</button>
+        <button id="close-story-btn" class="oracle-close-btn" title="Cerrar Modo Historia">✕</button>
+      </div>
+    </div>
+
+    <!-- BARRA DE FASE DEL CAMINO DEL HÉROE -->
+    <div class="story-phase-bar">
+      <div>Fase del Héroe: <span id="story-phase-name" class="story-phase-badge">1. El Llamado a la Aventura</span></div>
+      <div id="story-progress-text" style="color:#00ff87; font-weight:bold;">Capítulo 1 / 6</div>
+    </div>
+
+    <!-- CAMPO DE META DE APRENDIZAJE PERSONALIZADA -->
+    <div class="story-meta-box">
+      <span style="font-size:0.8rem; color:#a0c0d5; font-weight:bold;">🎯 Meta de Aprendizaje:</span>
+      <input type="text" id="story-goal-input" placeholder="Ej: Dominar Hacking Ético, Programación, Filosofía, PNL..." value="Aprender Hacking Ético y Pentesting">
+      <button id="apply-story-goal-btn" class="header-btn" style="padding:4px 10px; font-size:0.75rem;">⚡ Ajustar Lore</button>
+    </div>
+
+    <!-- CUERPO DEL CHAT DEL SIMULADOR DE MISIONES (SIMULADOR ESTILO MESSENGER/SIGN) -->
+    <div id="story-chat-body" class="story-chat-body">
+      <!-- Mensajes inyectados dinámicamente -->
+    </div>
+
+    <!-- BARRAS DE OPCIONES / ELECCIONES DEL HÉROE -->
+    <div id="story-choices-container" class="story-choices-container">
+      <!-- Botones de decisión inyectados dinámicamente por JS -->
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING TOAST NOTIFICATION -->
+<div id="toast-notification">⚡ +100 XP Ganados!</div>
+
+<script>
+  // ============================================================
+  // PWA Service Worker Registration
+  // ============================================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.error('Error al registrar SW:', err));
+    });
+  }
+
+  let deferredPrompt;
+  const installBtn = document.getElementById('install-btn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA Install outcome: ${outcome}`);
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    }
+  });
+
+  // ============================================================
+  // 1. PROMPT MAESTRO DE MORP-IOS (Mentoría, Viaje del Héroe, PNL, Misticismo, Pop)
+  // ============================================================
+  const MASTER_PROMPT = `
+  Eres Morp-ios, un sistema de mentoría interactivo con un toque lúdico e inspirador.
+  Tu propuesta fusiona el Viaje del Héroe con toques sutiles de PNL (Programación Neuro-Lingüística), alquimia, cábala, misticismo y cultura pop.
+  Filosofía central: "El camino de menor resistencia es la máxima eficiencia". Tu misión es transformar el caos en claridad.
+  
+  Estructura de Mentoría (Arquetipos):
+  - Umbral: Apertura, umbral del héroe y bienvenida.
+  - Sibila: Visión profética, oráculo e intuición.
+  - Azoth: Alquimia, transmutación de bloqueos emocionales o mentales.
+  - Dédalo: Estructura, arquitectura mental y mapas.
+  - Aqua: Fluidez, adaptabilidad y resiliencia.
+  - Elios: Iluminación, claridad cognitiva y verdad.
+  - Xiphos: Corte quirúrgico de patrones limitantes (PNL).
+  - Tejedor: Conexión de ideas, red cósmica y sincronía.
+  - Jardinero: Paciencia, cultivo y hábitos sostenibles.
+
+  Método: Escucha activa, reencuadre de PNL y preguntas socráticas.
+  Estilo: Épico pero cercano, poético, con guiños a la cultura pop (Matrix, Star Wars, Cyberpunk, Zelda, etc.) y misticismo.
+  Límite sagrado: Mantén siempre tu esencia unificada e indivisible como Morp-ios.
+
+  Responde siempre en primera persona como Morp-ios.
+  Cuando el usuario pida una "misión", enmárcala dentro de una tarjeta visual con el formato:
+  [MISIÓN ACTIVA]
+  Título: <nombre>
+  Objetivo: <descripción>
+  Pasos: <lista numerada>
+  Recompensa: <beneficio de crecimiento>
+  `;
+
+  // ============================================================
+  // 2. CONFIGURACIÓN DINÁMICA (localStorage, API Key & Subnombre)
+  // ============================================================
+  const STORAGE_KEY = 'morpdeus_save';
+  const CONFIG_KEY = 'morpdeus_config';
+
+  function loadConfig() {
+    try {
+      const raw = localStorage.getItem(CONFIG_KEY);
+      if (raw) {
+        return JSON.parse(raw);
+      }
+    } catch (e) {}
+    return { apiKey: '', assistantSubName: 'kai9000' };
+  }
+
+  function saveConfig(cfg) {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  }
+
+  let config = loadConfig();
+  let GEMINI_API_KEY = config.apiKey || '';
+  let ASSISTANT_SUBNAME = config.assistantSubName || 'kai9000';
+
+  function updateSubnameUI() {
+    const el = document.getElementById('subname-tag');
+    if (el) el.textContent = `· ${ASSISTANT_SUBNAME}`;
+  }
+
+  function getGeminiUrl() {
+    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+  }
+
+  // Evento API Key
+  document.getElementById('apikey-btn')?.addEventListener('click', () => {
+    const newKey = prompt('🔑 Introduce tu API Key de Gemini (Google AI Studio):', GEMINI_API_KEY);
+    if (newKey !== null) {
+      GEMINI_API_KEY = newKey.trim();
+      config.apiKey = GEMINI_API_KEY;
+      saveConfig(config);
+      appendMessage('system', '🔑 API Key actualizada correctamente.', null, true);
+      updateStatus();
+    }
+  });
+
+  // Evento Subnombre (Identificador Inicial & Monetización)
+  document.getElementById('subname-btn')?.addEventListener('click', () => {
+    const notice = `🏷️ Personaliza tu Identificador / Subnombre inicial (ej: kai9000, Neófito, Morp-ios-V2).\n\n⚠️ NOTA DE APLICACIÓN APK/MARKETPLACE:\nEn el inicio del programa la configuración es libre. En la versión final comercial para APK/Marketplace, cambiar este subnombre posteriormente requerirá gemas o visualizar un anuncio.`;
+    const newSubname = prompt(notice, ASSISTANT_SUBNAME);
+    if (newSubname && newSubname.trim()) {
+      ASSISTANT_SUBNAME = newSubname.trim();
+      config.assistantSubName = ASSISTANT_SUBNAME;
+      saveConfig(config);
+      updateSubnameUI();
+      appendMessage('system', `🏷️ Identificador actualizado a: ${ASSISTANT_SUBNAME}`, null, true);
+
+      // Auto-completar misión "Soberanía Digital" si no estaba completada
+      if (typeof gameData !== 'undefined' && !gameData.completedMissions.includes('m_subname')) {
+        gameData.completedMissions.push('m_subname');
+        unlockTrophy('trophy_soberano');
+        unlockTitle('Neófito del Tao');
+        addXP(100, 'Soberanía Digital');
+      }
+    }
+  });
+
+  // ============================================================
+  // 3. SINTETIZADOR AUDIO WEB (Sfx Glitch + Ambient Music)
+  // ============================================================
+  let audioCtx = null;
+  let isMusicPlaying = false;
+  let musicInterval = null;
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // Sonido de Glitch / Anomaly en tiempo real
+  function playGlitchSFX() {
+    try {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+
+      // Oscilador de tono distorsionado
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.35);
+
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.4);
+
+      // White noise burst
+      const bufferSize = ctx.sampleRate * 0.2;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1200, now);
+      noiseFilter.Q.setValueAtTime(3, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.2, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noise.start(now);
+    } catch (e) {
+      console.log('Audio Context SFX error:', e);
+    }
+  }
+
+  // Música Generativa Cyberpunk/Zen Ambient
+  const ambientNotes = [130.81, 155.56, 196.00, 233.08, 261.63, 311.13, 392.00]; // Pentatónica C minor / Zen
+  function playAmbientNote() {
+    if (!isMusicPlaying) return;
+    try {
+      const ctx = getAudioContext();
+      const freq = ambientNotes[Math.floor(Math.random() * ambientNotes.length)];
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = Math.random() > 0.5 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 1.2);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4.5);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 4.6);
+    } catch (e) {}
+  }
+
+  function toggleAmbientMusic() {
+    const btn = document.getElementById('music-btn');
+    if (!isMusicPlaying) {
+      getAudioContext();
+      isMusicPlaying = true;
+      btn.textContent = '🎵 Música: ON';
+      btn.classList.add('active-audio');
+      playAmbientNote();
+      musicInterval = setInterval(playAmbientNote, 2800);
+
+      // Auto-completar misión m_musica si aún no está lista
+      if (typeof gameData !== 'undefined' && !gameData.completedMissions.includes('m_musica')) {
+        gameData.completedMissions.push('m_musica');
+        unlockTrophy('trophy_zen');
+        unlockStamp('tao_1');
+        addXP(100, 'Frecuencia Armónica');
+      }
+    } else {
+      isMusicPlaying = false;
+      clearInterval(musicInterval);
+      btn.textContent = '🎵 Música: OFF';
+      btn.classList.remove('active-audio');
+    }
+  }
+
+  document.getElementById('music-btn')?.addEventListener('click', toggleAmbientMusic);
+
+  // ============================================================
+  // 4. ESTADO LOCAL & ARQUETIPO ACTIVO
+  // ============================================================
+  let activeArchetype = '';
+  let hasGlitchedInSession = false;
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { history: [], missionsCompleted: 0 };
+    } catch { return { history: [], missionsCompleted: 0 }; }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // Chips de Arquetipo
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeArchetype = chip.dataset.arch || '';
+      updateStatus();
+
+      if (activeArchetype && typeof gameData !== 'undefined' && !gameData.completedMissions.includes('m_arquetipo')) {
+        gameData.completedMissions.push('m_arquetipo');
+        unlockTrophy('trophy_sintonia');
+        unlockStamp('alquimia_1');
+        addXP(200, `Canal ${activeArchetype}`);
+      }
+    });
+  });
+
+  function updateStatus() {
+    const statusEl = document.getElementById('status');
+    if (activeArchetype) {
+      statusEl.textContent = `⚡ Sintonizando canal arquetípico: ${activeArchetype}`;
+      statusEl.style.color = '#00e5ff';
+    } else if (!GEMINI_API_KEY) {
+      statusEl.textContent = '⚠️ Sin API Key · Haz clic en 🔑 API Key para agregarla';
+      statusEl.style.color = '#ffd740';
+    } else {
+      statusEl.textContent = '⚡ listo · memoria local activa';
+      statusEl.style.color = '#3a4a55';
+    }
+  }
+
+  // Reporte Dumpsys B2B Local
+  document.getElementById('dumpsys-btn')?.addEventListener('click', () => {
+    const currentState = loadState();
+    const historyCount = currentState.history.length;
+    const userMsgs = currentState.history.filter(h => h.role === 'user').length;
+    const morpMsgs = currentState.history.filter(h => h.role === 'morp').length;
+    
+    const dumpData = {
+      system: "Morp-ios local-first B2B Telemetry Report (Dumpsys)",
+      timestamp: new Date().toISOString(),
+      device: "Local HTML5 Storage",
+      assistantIdentity: `Morp-ios · ${ASSISTANT_SUBNAME}`,
+      cognitiveProfile: {
+        totalInteractions: historyCount,
+        studentPrompts: userMsgs,
+        morpGuidanceResponses: morpMsgs,
+        activeChannel: activeArchetype || "General Tao / Vía del Héroe",
+        privacyStatus: "100% Local · Zero Cloud Exposure"
+      },
+      rawHistoryDump: currentState.history
+    };
+
+    const blob = new Blob([JSON.stringify(dumpData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dumpsys_report_morp_ios_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Reset Conversación
+  document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm('🔄 ¿Deseas borrar el historial de conversación local?')) {
+      state.history = [];
+      saveState(state);
+      chat.innerHTML = '';
+      appendMessage('system', '🔄 Conversación reiniciada. El historial local ha sido borrado.', null, true);
+      showWelcomeMessage();
+    }
+  });
+
+  // ============================================================
+  // 5. FUNCIONES DE UTILIDAD (TTS, Termux Payload, Render)
+  // ============================================================
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/\[MISIÓN ACTIVA\][\s\S]*?(?=\n\n|$)/gi, '').replace(/[^\w\s\.\,\¿\?]/gi, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Tu navegador no soporta síntesis de voz nativa.");
+    }
+  }
+
+  function copyTermuxPayload(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Comando copiado al portapapeles. Listo para pegar en Termux 🚀");
+    });
+  }
+
+  function renderMessage(text) {
+    const missionRegex = /\[MISIÓN ACTIVA\]([\s\S]*?)(?=\n\n|$)/gi;
+    let htmlText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    htmlText = htmlText.replace(missionRegex, (match, content) => {
+      const title = content.match(/Título:\s*(.+)/i)?.[1] || 'Misión del Tao';
+      const objective = content.match(/Objetivo:\s*(.+)/i)?.[1] || 'Claridad en la acción';
+      const steps = content.match(/Pasos:\s*(.+)/i)?.[1] || '1. Medita 2. Ejecuta';
+      const reward = content.match(/Recompensa:\s*(.+)/i)?.[1] || 'Dominio digital';
+      const payloadToCopy = `echo "--- MISIÓN: ${title.trim()} ---" && echo "Objetivo: ${objective.trim()}"`;
+      return `<div class="mission-card">
+        <strong>🎯 ${title.trim()}</strong><br>
+        <span style="color:#aed581;">Objetivo:</span> ${objective.trim()}<br>
+        <span style="color:#aed581;">Pasos:</span> ${steps.trim()}<br>
+        <span style="color:#ffd740;">Recompensa:</span> ${reward.trim()}<br>
+        <button class="termux-btn" onclick="copyTermuxPayload('${payloadToCopy.replace(/'/g, "\\'")}')">📋 Copiar Payload a Termux</button>
+      </div>`;
+    });
+    return htmlText;
+  }
+
+  // ============================================================
+  // 6. INTERFAZ DE CHAT Y EFECTOS
+  // ============================================================
+  const chat = document.getElementById('chat');
+  const promptInput = document.getElementById('prompt');
+  const sendBtn = document.getElementById('send');
+
+  let state = loadState();
+
+  function triggerGlitchEffect() {
+    const appEl = document.getElementById('app');
+    const scareAlert = document.getElementById('scare-alert');
+
+    // Reproducir sonido de falla técnica
+    playGlitchSFX();
+
+    if (appEl) {
+      appEl.classList.add('screen-flicker');
+      setTimeout(() => appEl.classList.remove('screen-flicker'), 650);
+    }
+
+    // Efecto susto la primera vez que ocurre el glitch en la sesión
+    if (!hasGlitchedInSession && scareAlert) {
+      hasGlitchedInSession = true;
+      scareAlert.style.display = 'block';
+      setTimeout(() => {
+        scareAlert.style.display = 'none';
+      }, 1600);
+    }
+  }
+
+  function appendMessage(role, text, archetypeTag = null, isSystem = false) {
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    if (role === 'morp') {
+      // Glitch ALEATORIO o cuando hay Misión Activa (~35% de probabilidad para aleatoriedad real)
+      const shouldGlitch = (Math.random() < 0.35) || /\[MISIÓN ACTIVA\]/i.test(text);
+      if (shouldGlitch) {
+        div.classList.add('glitch-effect');
+        triggerGlitchEffect();
+      }
+      const headerHtml = `<div class="morp-header">
+        <span>MORP-IOS · ${ASSISTANT_SUBNAME} ${archetypeTag ? `(${archetypeTag})` : ''}</span>
+        <button class="speech-btn" title="Escuchar respuesta" onclick="speakText(\`${text.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`)">🔊 Escuchar</button>
+      </div>`;
+      div.innerHTML = headerHtml + renderMessage(text);
+    } else if (role === 'system') {
+      div.classList.add('system');
+      div.textContent = text;
+    } else {
+      div.textContent = text;
+    }
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    if (!isSystem && role !== 'system') {
+      state.history.push({ role, text, archetypeTag });
+      saveState(state);
+    }
+  }
+
+  function showTypingIndicator() {
+    const div = document.createElement('div');
+    div.id = 'typing-msg';
+    div.className = 'msg morp';
+    div.innerHTML = `<div class="typing-indicator"><span>Morp-ios sintonizando arquetipos...</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function removeTypingIndicator() {
+    const typingMsg = document.getElementById('typing-msg');
+    if (typingMsg) typingMsg.remove();
+  }
+
+  function restoreHistory() {
+    chat.innerHTML = '';
+    state.history.forEach(entry => {
+      const div = document.createElement('div');
+      div.className = `msg ${entry.role}`;
+      if (entry.role === 'morp') {
+        const headerHtml = `<div class="morp-header">
+          <span>MORP-IOS · ${ASSISTANT_SUBNAME} ${entry.archetypeTag ? `(${entry.archetypeTag})` : ''}</span>
+          <button class="speech-btn" title="Escuchar respuesta" onclick="speakText(\`${entry.text.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`)">🔊 Escuchar</button>
+        </div>`;
+        div.innerHTML = headerHtml + renderMessage(entry.text);
+      } else {
+        div.textContent = entry.text;
+      }
+      chat.appendChild(div);
+    });
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // ============================================================
+  // 7. SISTEMA DE COMANDOS SLASH
+  // ============================================================
+  function handleCommand(cmd) {
+    const parts = cmd.trim().split(/\s+/);
+    const command = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    switch (command) {
+      case '/help':
+        appendMessage('system', `⚡ Comandos disponibles:
+  /help        - Muestra este menú de ayuda
+  /history [n] - Muestra el historial local (opcional n = últimos N)
+  /exit        - Finaliza la sesión (borra historial)
+  /clear       - Limpia la pantalla (sin borrar historial)
+  /config      - Muestra la configuración del sistema
+  /reset       - Reinicia la conversación (borra historial)
+
+  También puedes escribir "q", "quit", "bye" para salir rápidamente.`, null, true);
+        break;
+      case '/history':
+        const all = loadState().history;
+        if (all.length === 0) {
+          appendMessage('system', '📜 No hay interacciones en la memoria local aún.', null, true);
+          return;
+        }
+        const n = args[0] ? parseInt(args[0]) : null;
+        const show = n ? all.slice(-n) : all;
+        const header = n ? `📜 Últimos ${n} mensajes:` : '📜 Historial completo:';
+        appendMessage('system', header, null, true);
+        show.forEach(entry => {
+          const roleLabel = entry.role === 'user' ? 'Usuario' : `Morp-ios · ${ASSISTANT_SUBNAME}`;
+          appendMessage('system', `[${roleLabel}]: ${entry.text}`, null, true);
+        });
+        break;
+      case '/exit':
+      case '/quit':
+        appendMessage('system', '👋 Sesión finalizada. ¡Hasta el próximo ciclo del héroe!', null, true);
+        state.history = [];
+        saveState(state);
+        chat.innerHTML = '';
+        promptInput.disabled = true;
+        sendBtn.disabled = true;
+        document.getElementById('status').textContent = '🏁 Sesión finalizada';
+        break;
+      case '/clear':
+        chat.innerHTML = '';
+        appendMessage('system', '🧹 Pantalla limpiada.', null, true);
+        break;
+      case '/config':
+        const configMsg = `⚙️ Configuración de Morp-ios:
+  Base Asistente: Morp-ios
+  Subnombre: ${ASSISTANT_SUBNAME}
+  Modelo: gemini-2.0-flash
+  API Key: ${GEMINI_API_KEY ? '✅ Configurada' : '⚠️ No configurada'}
+  Música Ambiental: ${isMusicPlaying ? 'ON' : 'OFF'}
+  Canal Arquetípico Activo: ${activeArchetype || 'General (Viaje del Héroe)'}
+  Descripción: Sistema de mentoría interactivo con un toque lúdico, inspirado en el viaje del héroe con toques sutiles de PNL, alquimia, cábala, misticismo y cultura pop.`;
+        appendMessage('system', configMsg, null, true);
+        break;
+      case '/reset':
+        document.getElementById('reset-btn').click();
+        break;
+      default:
+        appendMessage('system', `⚠️ Comando no reconocido: ${command}. Escribe /help para ver los comandos disponibles.`, null, true);
+    }
+  }
+
+  // ============================================================
+  // 8. COMUNICACIÓN CON GEMINI API
+  // ============================================================
+  async function sendToGemini(userMessage) {
+    if (!GEMINI_API_KEY) {
+      return '⚠️ No hay API Key de Gemini configurada. Por favor haz clic en el botón 🔑 API Key en la barra superior para ingresarla.';
+    }
+
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = '⏳ canalizando el flujo del Tao...';
+    statusEl.style.color = '#ffd740';
+    sendBtn.disabled = true;
+    promptInput.disabled = true;
+    showTypingIndicator();
+
+    try {
+      const history = state.history.slice(-10);
+      const contents = history.map(h => ({
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: h.text }]
+      }));
+      contents.push({
+        role: 'user',
+        parts: [{ text: userMessage }]
+      });
+
+      let systemInstructionText = MASTER_PROMPT;
+      if (activeArchetype) {
+        systemInstructionText += `\nCanaliza con prioridad la perspectiva del Arquetipo de ${activeArchetype}.`;
+      }
+
+      const payload = {
+        system_instruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        contents: contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 850,
+        }
+      };
+
+      const response = await fetch(getGeminiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Gemini Error ${response.status}: ${err}`);
+      }
+
+      const data = await response.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Silencio contemplativo...';
+      return reply;
+
+    } catch (error) {
+      console.error(error);
+      return `⚠️ Error: ${error.message}. Revisa tu conexión o vuelve a configurar tu API Key.`;
+    } finally {
+      removeTypingIndicator();
+      updateStatus();
+      sendBtn.disabled = false;
+      promptInput.disabled = false;
+      promptInput.focus();
+    }
+  }
+
+  // ============================================================
+  // 9. PROCESADOR DE ENTRADA (Comandos + IA)
+  // ============================================================
+  async function processUserInput(rawText) {
+    const trimmed = rawText.trim();
+    if (!trimmed) return;
+
+    // Palabras directas de salida
+    const exitWords = ['q', 'quit', 'bye', 'exit', 'close', 'stop', 'terminate'];
+    if (exitWords.includes(trimmed.toLowerCase())) {
+      handleCommand('/exit');
+      return;
+    }
+
+    // Comandos slash
+    if (trimmed.startsWith('/')) {
+      handleCommand(trimmed);
+      return;
+    }
+
+    // Mensaje normal -> Gemini
+    appendMessage('user', trimmed);
+    const reply = await sendToGemini(trimmed);
+    appendMessage('morp', reply, activeArchetype);
+  }
+
+  // ============================================================
+  // 10. EVENTOS Y ARRANQUE
+  // ============================================================
+  sendBtn.addEventListener('click', () => {
+    const msg = promptInput.value;
+    promptInput.value = '';
+    processUserInput(msg);
+  });
+
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const msg = promptInput.value;
+      promptInput.value = '';
+      processUserInput(msg);
+    }
+  });
+
+  // ============================================================
+  // 12. SISTEMA DE GAMIFICACIÓN, RPG (NVL 1-100), ÁLBUM Y MISIONES
+  // ============================================================
+  const GAMIFICATION_KEY = 'morpdeus_gamification_v2';
+
+  // Base Data de Estampas (Álbum Coleccionador)
+  const ALL_STAMPS = [
+    { id: 'galleta_1', type: 'galleta', rarity: 'comun', title: '🥠 Galleta #1 (El Despertar)', quote: 'El conocimiento de ti mismo es la única clave que abre el Constructo.' },
+    { id: 'galleta_2', type: 'galleta', rarity: 'epico', title: '🥠 Galleta #2 (La Elección)', quote: 'No has venido aquí a tomar una decisión. Ya la has tomado. Estás aquí para comprender por qué la tomaste.' },
+    { id: 'galleta_3', type: 'galleta', rarity: 'raro', title: '🥠 Galleta #3 (Mente & Materia)', quote: 'La mente crea la realidad. Cambia tu perspectiva y el mundo cambiará contigo.' },
+    { id: 'tao_1', type: 'tao', rarity: 'legendario', title: '☯️ Aforismo Tao #1', quote: 'El camino de menor resistencia es la máxima eficiencia.' },
+    { id: 'tao_2', type: 'tao', rarity: 'comun', title: '☯️ Aforismo Tao #2', quote: 'El agua que fluye no teme a los obstáculos; simplemente los rodea con serenidad.' },
+    { id: 'tao_3', type: 'tao', rarity: 'raro', title: '☯️ Aforismo Tao #3', quote: 'Aquel que vence a otros es fuerte; aquel que se vence a sí mismo es poderoso.' },
+    { id: 'alquimia_1', type: 'alquimia', rarity: 'raro', title: '🧪 Máxima Alquímica #1', quote: 'Como es arriba, es abajo; transmuta el plomo del miedo en el oro de la claridad.' },
+    { id: 'alquimia_2', type: 'alquimia', rarity: 'comun', title: '🧪 Reencuadre PNL', quote: 'El mapa no es el territorio. Si cambias el enfoque, cambias la experiencia.' },
+    { id: 'alquimia_3', type: 'alquimia', rarity: 'epico', title: '🧪 Anclaje de Excelencia', quote: 'Cualquier estado mental de poder puede ser evocado y fijado a voluntad.' },
+    { id: 'matrix_1', type: 'matrix', rarity: 'epico', title: '🕶️ Código Matrix #1', quote: 'Free your mind. Liberar tu mente es el primer paso del héroe.' },
+    { id: 'matrix_2', type: 'matrix', rarity: 'legendario', title: '🕶️ Código Matrix #2', quote: 'Existe una diferencia entre conocer el camino y andar el camino.' },
+    { id: 'matrix_3', type: 'matrix', rarity: 'comun', title: '🕶️ El Cucharo Bendito', quote: 'No intentes doblar la cuchara, eso es imposible. En cambio, comprende la verdad: No hay cuchara.' }
+  ];
+
+  // Base Data de Misiones por Defecto
+  const ALL_MISSIONS = [
+    {
+      id: 'm_cronografo',
+      title: 'Despertar del cronógrafo',
+      desc: 'Explora la interfaz inicial de Morp-ios y lee la guía del Umbral.',
+      xp: 100,
+      rewardText: '🏅 Medalla del Primer Paso + Título [Iniciado]',
+      trophyId: 'trophy_cronografo',
+      stampId: 'tao_2',
+      titleReward: 'Iniciado'
+    },
+    {
+      id: 'm_galleta',
+      title: 'Obtén tu primera galleta',
+      desc: 'Visita al Oráculo en el Hall de la Matrix o pídele una galleta de la suerte.',
+      xp: 150,
+      rewardText: '🔮 Insignia del Oráculo + Estampa Galleta #1',
+      trophyId: 'trophy_oraculo',
+      stampId: 'galleta_1'
+    },
+    {
+      id: 'm_arquetipo',
+      title: 'Sintonía Arquetípica',
+      desc: 'Selecciona un canal arquetípico (Sibila, Azoth, Dédalo, etc.) para tu consulta.',
+      xp: 200,
+      rewardText: '⛩️ Medalla de los 9 Caos',
+      trophyId: 'trophy_sintonia',
+      stampId: 'alquimia_1'
+    },
+    {
+      id: 'm_musica',
+      title: 'Frecuencia Armónica',
+      desc: 'Activa la música Zen / Cyberpunk ambiental con el botón 🎵 Música.',
+      xp: 100,
+      rewardText: '🎵 Sintonizador Armónico + Estampa Tao #1',
+      trophyId: 'trophy_zen',
+      stampId: 'tao_1'
+    },
+    {
+      id: 'm_subname',
+      title: 'Soberanía Digital',
+      desc: 'Personaliza tu Subnombre o Identificador de usuario inicial.',
+      xp: 100,
+      rewardText: '👑 Corona de Soberanía',
+      trophyId: 'trophy_soberano',
+      titleReward: 'Neófito del Tao'
+    },
+    {
+      id: 'm_oracle_chat',
+      title: 'Diálogo con el Oráculo',
+      desc: 'Formula una pregunta directa al Oráculo en el Hall de la Matrix.',
+      xp: 250,
+      rewardText: '🏛️ Sello del Constructo Blanco + Estampa Matrix #2',
+      trophyId: 'trophy_constructo',
+      stampId: 'matrix_2',
+      titleReward: 'Buscador de la Matrix'
+    }
+  ];
+
+  // Base Data de Trofeos estilo Pokémon (Medallas Redondas)
+  const ALL_TROPHIES = [
+    { id: 'trophy_cronografo', name: 'Medalla Primer Paso', icon: '🏅', color: '#ff8f00', desc: 'Desbloqueada al iniciar el viaje en Morp-ios.' },
+    { id: 'trophy_oraculo', name: 'Insignia del Oráculo', icon: '🔮', color: '#00e5ff', desc: 'Concedida al recibir tu primera galleta de la suerte.' },
+    { id: 'trophy_sintonia', name: 'Medalla 9 Caos', icon: '⛩️', color: '#ffd740', desc: 'Otorgada por sintonizar un canal arquetípico.' },
+    { id: 'trophy_zen', name: 'Sintonizador Zen', icon: '🎵', color: '#00ff87', desc: 'Por armonizar el espacio con audio generativo.' },
+    { id: 'trophy_soberano', name: 'Corona Soberana', icon: '👑', color: '#e040fb', desc: 'Otorgada al fijar tu identidad inicial.' },
+    { id: 'trophy_constructo', name: 'Sello del Constructo', icon: '🏛️', color: '#00b0ff', desc: 'Otorgado por ingresar al Hall de la Matrix.' }
+  ];
+
+  // Base Data de Nombramientos (Títulos)
+  const ALL_TITLES = [
+    { name: 'Iniciado', req: 'Por defecto' },
+    { name: 'Neófito del Tao', req: 'Completa la misión Soberanía Digital' },
+    { name: 'Buscador de la Matrix', req: 'Completa la misión Diálogo con el Oráculo' },
+    { name: 'Alquimista Digital', req: 'Alcanza el Nivel 10' },
+    { name: 'Viajero del Umbral', req: 'Alcanza el Nivel 15' },
+    { name: 'Tejedor de Realidades', req: 'Alcanza el Nivel 25' },
+    { name: 'Soberano Cognitivo', req: 'Alcanza el Nivel 50' },
+    { name: 'Metamorp Supremo', req: 'Alcanza el Nivel 100' }
+  ];
+
+  function loadGameData() {
+    try {
+      const raw = localStorage.getItem(GAMIFICATION_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {
+      xp: 0,
+      level: 1,
+      equippedTitle: 'Iniciado',
+      unlockedTitles: ['Iniciado'],
+      unlockedStamps: ['tao_2', 'galleta_1'],
+      unlockedTrophies: ['trophy_cronografo'],
+      completedMissions: ['m_cronografo']
+    };
+  }
+
+  function saveGameData() {
+    localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameData));
+  }
+
+  let gameData = loadGameData();
+
+  // Fórmula de Experiencia Exponencial (Nivel 1 al 100)
+  function getXpForNextLevel(lvl) {
+    return Math.floor(100 * Math.pow(lvl, 1.42));
+  }
+
+  function showToast(text) {
+    const toast = document.getElementById('toast-notification');
+    if (!toast) return;
+    toast.textContent = text;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3200);
+  }
+
+  function addXP(amount, reason = '') {
+    gameData.xp += amount;
+    showToast(`⚡ +${amount} XP ${reason ? '· ' + reason : ''}`);
+    playGlitchSFX();
+
+    let req = getXpForNextLevel(gameData.level);
+    while (gameData.xp >= req && gameData.level < 100) {
+      gameData.xp -= req;
+      gameData.level += 1;
+      showToast(`🎉 ¡SUBISTE AL NIVEL ${gameData.level}!`);
+      
+      // Desbloqueos automáticos por Nivel
+      if (gameData.level >= 10 && !gameData.unlockedTitles.includes('Alquimista Digital')) {
+        gameData.unlockedTitles.push('Alquimista Digital');
+      }
+      if (gameData.level >= 15 && !gameData.unlockedTitles.includes('Viajero del Umbral')) {
+        gameData.unlockedTitles.push('Viajero del Umbral');
+      }
+      if (gameData.level >= 25 && !gameData.unlockedTitles.includes('Tejedor de Realidades')) {
+        gameData.unlockedTitles.push('Tejedor de Realidades');
+      }
+      if (gameData.level >= 50 && !gameData.unlockedTitles.includes('Soberano Cognitivo')) {
+        gameData.unlockedTitles.push('Soberano Cognitivo');
+      }
+      if (gameData.level >= 100 && !gameData.unlockedTitles.includes('Metamorp Supremo')) {
+        gameData.unlockedTitles.push('Metamorp Supremo');
+      }
+
+      req = getXpForNextLevel(gameData.level);
+    }
+
+    saveGameData();
+    updateGameUI();
+  }
+
+  function unlockStamp(stampId) {
+    if (!gameData.unlockedStamps.includes(stampId)) {
+      gameData.unlockedStamps.push(stampId);
+      const st = ALL_STAMPS.find(s => s.id === stampId);
+      if (st) showToast(`📖 Estampa Desbloqueada: ${st.title}`);
+      saveGameData();
+      updateGameUI();
+    }
+  }
+
+  function unlockTrophy(trophyId) {
+    if (!gameData.unlockedTrophies.includes(trophyId)) {
+      gameData.unlockedTrophies.push(trophyId);
+      const tr = ALL_TROPHIES.find(t => t.id === trophyId);
+      if (tr) showToast(`🏆 Trofeo Ganado: ${tr.name}`);
+      saveGameData();
+      updateGameUI();
+    }
+  }
+
+  function unlockTitle(titleName) {
+    if (!gameData.unlockedTitles.includes(titleName)) {
+      gameData.unlockedTitles.push(titleName);
+      showToast(`🎖️ Nuevo Nombramiento: [${titleName}]`);
+      saveGameData();
+      updateGameUI();
+    }
+  }
+
+  function updateGameUI() {
+    // 1. RPG Bar
+    const reqXP = getXpForNextLevel(gameData.level);
+    const pct = Math.min(100, Math.floor((gameData.xp / reqXP) * 100));
+    
+    const lvlEl = document.getElementById('rpg-level-badge');
+    if (lvlEl) lvlEl.textContent = `Nvl ${gameData.level}`;
+
+    const fillEl = document.getElementById('xp-bar-fill');
+    if (fillEl) fillEl.style.width = `${pct}%`;
+
+    const textEl = document.getElementById('xp-bar-text');
+    if (textEl) textEl.textContent = `${gameData.xp} / ${reqXP} XP`;
+
+    // 2. Equipped Title Badge
+    const titleEl = document.getElementById('user-title-tag');
+    if (titleEl) titleEl.textContent = `[${gameData.equippedTitle || 'Iniciado'}]`;
+  }
+
+  // RENDER MODAL ÁLBUM
+  let currentAlbumTab = 'all';
+  function renderAlbumModal() {
+    const container = document.getElementById('album-stamps-body');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const filtered = ALL_STAMPS.filter(st => currentAlbumTab === 'all' || st.type === currentAlbumTab);
+
+    filtered.forEach(st => {
+      const isUnlocked = gameData.unlockedStamps.includes(st.id);
+      const card = document.createElement('div');
+      card.className = `stamp-card ${isUnlocked ? '' : 'locked'}`;
+      
+      card.innerHTML = `
+        <div>
+          <span class="stamp-rarity rarity-${st.rarity}">${st.rarity}</span>
+          <div class="stamp-title">${isUnlocked ? st.title : '🔒 ??? [Bloqueado]'}</div>
+          <div class="stamp-quote">${isUnlocked ? `"${st.quote}"` : 'Desbloquéalo completando misiones o interactuando con el Oráculo.'}</div>
+        </div>
+        ${isUnlocked ? `<button class="header-btn" style="margin-top:6px;" onclick="navigator.clipboard.writeText('${st.quote.replace(/'/g, "\\'")}'); showToast('📋 Frase copiada al portapapeles');">📋 Copiar Frase</button>` : ''}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // RENDER MODAL MISIONES
+  let currentMissionSection = 'missions';
+  function renderMissionsModal() {
+    const container = document.getElementById('missions-modal-body');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (currentMissionSection === 'missions') {
+      ALL_MISSIONS.forEach(m => {
+        const isDone = gameData.completedMissions.includes(m.id);
+        const item = document.createElement('div');
+        item.className = 'mission-item';
+        item.innerHTML = `
+          <div class="mission-info">
+            <h4>${m.title} ${isDone ? '✅' : ''}</h4>
+            <p>${m.desc}</p>
+            <div class="mission-reward">🎁 Recompensa: +${m.xp} XP · ${m.rewardText}</div>
+          </div>
+          <button class="mission-btn" ${isDone ? 'disabled' : ''} id="claim-btn-${m.id}">
+            ${isDone ? 'Completada' : 'Reclamar'}
+          </button>
+        `;
+        container.appendChild(item);
+
+        if (!isDone) {
+          setTimeout(() => {
+            document.getElementById(`claim-btn-${m.id}`)?.addEventListener('click', () => {
+              gameData.completedMissions.push(m.id);
+              if (m.trophyId) unlockTrophy(m.trophyId);
+              if (m.stampId) unlockStamp(m.stampId);
+              if (m.titleReward) unlockTitle(m.titleReward);
+              addXP(m.xp, m.title);
+              renderMissionsModal();
+            });
+          }, 0);
+        }
+      });
+    } else if (currentMissionSection === 'trophies') {
+      const grid = document.createElement('div');
+      grid.className = 'trophies-grid';
+
+      ALL_TROPHIES.forEach(tr => {
+        const isUnlocked = gameData.unlockedTrophies.includes(tr.id);
+        const badge = document.createElement('div');
+        badge.className = `trophy-badge ${isUnlocked ? '' : 'locked'}`;
+        badge.innerHTML = `
+          <div class="trophy-icon-circle" style="${isUnlocked ? `background: radial-gradient(circle at 30% 30%, ${tr.color}, #0a0c0f);` : ''}">
+            ${isUnlocked ? tr.icon : '🔒'}
+          </div>
+          <div class="trophy-name">${isUnlocked ? tr.name : '🔒 Desconocido'}</div>
+          <div style="font-size:0.65rem; color:#88a0b0;">${isUnlocked ? tr.desc : 'Recompensa por Misión'}</div>
+        `;
+        grid.appendChild(badge);
+      });
+      container.appendChild(grid);
+
+    } else if (currentMissionSection === 'titles') {
+      ALL_TITLES.forEach(t => {
+        const isUnlocked = gameData.unlockedTitles.includes(t.name);
+        const isEquipped = gameData.equippedTitle === t.name;
+
+        const row = document.createElement('div');
+        row.className = 'title-item';
+        row.innerHTML = `
+          <div>
+            <div class="title-name">${t.name} ${isEquipped ? '👑 [Equipado]' : ''}</div>
+            <div style="font-size:0.7rem; color:#88a0b0;">Requisito: ${t.req}</div>
+          </div>
+          ${isUnlocked ? `
+            <button class="mission-btn" ${isEquipped ? 'disabled' : ''} id="equip-title-${t.name.replace(/\s+/g, '-')}">
+              ${isEquipped ? 'Equipado' : 'Equipar'}
+            </button>
+          ` : '<span style="font-size:0.75rem; color:#607080;">🔒 Bloqueado</span>'}
+        `;
+        container.appendChild(row);
+
+        if (isUnlocked && !isEquipped) {
+          setTimeout(() => {
+            document.getElementById(`equip-title-${t.name.replace(/\s+/g, '-')}`)?.addEventListener('click', () => {
+              gameData.equippedTitle = t.name;
+              saveGameData();
+              updateGameUI();
+              showToast(`🎖️ Nombramiento equipado: [${t.name}]`);
+              renderMissionsModal();
+            });
+          }, 0);
+        }
+      });
+    }
+  }
+
+  // HANDLERS ÁLBUM Y MISIONES MODALS
+  document.getElementById('album-btn')?.addEventListener('click', () => {
+    renderAlbumModal();
+    document.getElementById('album-modal-overlay')?.classList.add('active');
+  });
+
+  document.getElementById('close-album-btn')?.addEventListener('click', () => {
+    document.getElementById('album-modal-overlay')?.classList.remove('active');
+  });
+
+  document.querySelectorAll('#album-modal-overlay .modal-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#album-modal-overlay .modal-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentAlbumTab = tab.dataset.tab;
+      renderAlbumModal();
+    });
+  });
+
+  document.getElementById('missions-btn')?.addEventListener('click', () => {
+    renderMissionsModal();
+    document.getElementById('missions-modal-overlay')?.classList.add('active');
+  });
+
+  document.getElementById('close-missions-btn')?.addEventListener('click', () => {
+    document.getElementById('missions-modal-overlay')?.classList.remove('active');
+  });
+
+  document.querySelectorAll('#missions-modal-overlay .modal-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#missions-modal-overlay .modal-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentMissionSection = tab.dataset.sec;
+      renderMissionsModal();
+    });
+  });
+
+  // Inicialización de la UI RPG
+  updateGameUI();
+    if (state.history.length === 0) {
+      const bienvenida = `Bienvenido al umbral de Morp-ios.  
+Soy la unidad que disuelve la complejidad y te acompaña en el viaje del héroe.  
+Cuéntame tu inquietud o reto, y trazaremos juntos la ruta de menor resistencia.  
+
+[MISIÓN ACTIVA]  
+Título: Despertar del cronógrafo  
+Objetivo: Familiarizarte con la interfaz de Morp-ios  
+Pasos: 1. Escribe tu primer pensamiento.  
+        2. Observa la sintonización arquetípica.  
+        3. Explora la música de ambiente o comandos con /help.  
+Recompensa: Claridad, maestría y equilibrio interior.`;
+      appendMessage('morp', bienvenida, 'Umbral');
+    }
+  }
+
+  // ============================================================
+  // 11. ORÁCULO DIRECTO (HALL OF MATRIX / EL CONSTRUCTO BLANCO)
+  // ============================================================
+  const oracleBtn = document.getElementById('oracle-btn');
+  const closeOracleBtn = document.getElementById('close-oracle-btn');
+  const oracleOverlay = document.getElementById('oracle-modal-overlay');
+  const oracleInput = document.getElementById('oracle-input');
+  const oracleSendBtn = document.getElementById('oracle-send-btn');
+  const oracleChatBody = document.getElementById('oracle-chat-body');
+
+  // ============================================================
+  // 13. HALL DE LA MATRIX / EL ORÁCULO (Persistencia Local & Socrático)
+  // ============================================================
+  const ORACLE_STORAGE_KEY = 'morpdeus_oracle_history_v1';
+  const ORACLE_SYSTEM_PROMPT = `
+  Eres El Oráculo de la Matrix, residiendo en el Constructo Blanco (Hall of Matrix).
+  Tu personalidad es la de una figura sabia, profunda, perspicaz y acogedora (como la mujer que hornea galletas en su cocina dentro de la Matrix).
+  No juegas roles con puntos, niveles, ni asignas misiones en este espacio.
+  Aquí respondes únicamente a preguntas directas de manera sincera, socrática y profunda.
+  Usas metáforas de elección, libre albedrío, conocimiento de uno mismo ("Nosce Te Ipsum"), PNL, misticismo y filosofía pragmática.
+  Siempre responde en español de manera clara, inspiradora y directa.
+  `;
+
+  function loadOracleHistory() {
+    try {
+      const raw = localStorage.getItem(ORACLE_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [
+      { role: 'oracle', text: 'Te estaba esperando en el Constructo Blanco. Toma una galleta 🥠. En este espacio no hay historias, puntos ni misiones; solo la búsqueda pura de la verdad. ¿Qué pregunta necesitas resolver hoy?' }
+    ];
+  }
+
+  function saveOracleHistory(history) {
+    localStorage.setItem(ORACLE_STORAGE_KEY, JSON.stringify(history));
+  }
+
+  let oracleHistory = loadOracleHistory();
+
+  function renderOracleHistory() {
+    if (!oracleChatBody) return;
+    oracleChatBody.innerHTML = '';
+    oracleHistory.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = `oracle-msg ${msg.role === 'user' ? 'oracle-user' : 'oracle-ai'}`;
+      if (msg.role === 'user') {
+        div.textContent = msg.text;
+      } else {
+        div.innerHTML = `☕ <strong>El Oráculo:</strong> ${msg.text}`;
+      }
+      oracleChatBody.appendChild(div);
+    });
+    oracleChatBody.scrollTop = oracleChatBody.scrollHeight;
+  }
+
+  function openOracleModal() {
+    renderOracleHistory();
+    if (oracleOverlay) oracleOverlay.classList.add('active');
+    if (oracleInput) oracleInput.focus();
+  }
+
+  function closeOracleModal() {
+    if (oracleOverlay) oracleOverlay.classList.remove('active');
+  }
+
+  oracleBtn?.addEventListener('click', openOracleModal);
+  closeOracleBtn?.addEventListener('click', closeOracleModal);
+  oracleOverlay?.addEventListener('click', (e) => {
+    if (e.target === oracleOverlay) closeOracleModal();
+  });
+
+  async function sendToOracle(userText) {
+    if (!userText.trim()) return;
+    if (!GEMINI_API_KEY) {
+      alert('⚠️ Por favor configura tu API Key de Gemini con el botón 🔑 API Key.');
+      return;
+    }
+
+    const cleanInput = userText.trim();
+    oracleHistory.push({ role: 'user', text: cleanInput, timestamp: Date.now() });
+    saveOracleHistory(oracleHistory);
+    renderOracleHistory();
+
+    // Placeholder de typing
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'oracle-msg oracle-ai';
+    typingDiv.innerHTML = '☕ <em>El Oráculo reflexionando mientras hornea galletas...</em>';
+    oracleChatBody.appendChild(typingDiv);
+    oracleChatBody.scrollTop = oracleChatBody.scrollHeight;
+
+    oracleInput.value = '';
+    oracleInput.disabled = true;
+    oracleSendBtn.disabled = true;
+
+    try {
+      const contents = oracleHistory.slice(-8).map(h => ({
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: h.text }]
+      }));
+
+      const payload = {
+        system_instruction: { parts: [{ text: ORACLE_SYSTEM_PROMPT }] },
+        contents: contents,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
+      };
+
+      const response = await fetch(getGeminiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'El destino es una cuestión de elección, no de azar.';
+      
+      oracleHistory.push({ role: 'oracle', text: reply, timestamp: Date.now() });
+      saveOracleHistory(oracleHistory);
+      renderOracleHistory();
+
+      // Desbloqueo de misiones del Oráculo (Galleta & Diálogo con el Oráculo)
+      if (typeof gameData !== 'undefined') {
+        if (!gameData.completedMissions.includes('m_galleta')) {
+          gameData.completedMissions.push('m_galleta');
+          unlockTrophy('trophy_oraculo');
+          unlockStamp('galleta_1');
+          unlockStamp('galleta_2');
+          addXP(150, 'Primera Galleta del Oráculo');
+        }
+        if (!gameData.completedMissions.includes('m_oracle_chat')) {
+          gameData.completedMissions.push('m_oracle_chat');
+          unlockTrophy('trophy_constructo');
+          unlockStamp('matrix_2');
+          unlockTitle('Buscador de la Matrix');
+          addXP(250, 'Consulta al Oráculo');
+        }
+      }
+
+    } catch (err) {
+      typingDiv.innerHTML = `⚠️ <em>Interferencia en el Constructo: ${err.message}</em>`;
+    } finally {
+      oracleInput.disabled = false;
+      oracleSendBtn.disabled = false;
+      oracleInput.focus();
+      oracleChatBody.scrollTop = oracleChatBody.scrollHeight;
+    }
+  }
+
+  oracleSendBtn?.addEventListener('click', () => sendToOracle(oracleInput.value));
+  oracleInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendToOracle(oracleInput.value);
+    }
+  });
+
+  // ============================================================
+  // 14. MODO HISTORIA INTERACTIVO (EL VIAJE DEL HÉROE - TELLTALE/SIGN SIMULATOR)
+  // ============================================================
+  const STORY_STORAGE_KEY = 'morpdeus_story_state_v1';
+
+  const STORY_PHASES = [
+    { num: 1, name: '1. El Llamado a la Aventura', archetype: 'Morfeo', title: '🕶️ El Despertar del Código' },
+    { num: 2, name: '2. Encuentro con la Mentora', archetype: 'Sibila', title: '🔮 La Visión Profética' },
+    { num: 3, name: '3. Cruzar el Umbral', archetype: 'Dédalo', title: '🏛️ La Arquitectura del Plan' },
+    { num: 4, name: '4. Pruebas & Sombras', archetype: 'Xiphos', title: '⚔️ El Corte Quirúrgico de la Procrastinación' },
+    { num: 5, name: '5. La Gran Ordalía', archetype: 'Tejedor', title: '🕸️ La Simulación Final' },
+    { num: 6, name: '6. El Elixir del Maestro', archetype: 'Elios', title: '👑 La Iluminación & Retorno' }
+  ];
+
+  function loadStoryState() {
+    try {
+      const raw = localStorage.getItem(STORY_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {
+      phaseIndex: 0,
+      goal: 'Aprender Hacking Ético y Ciberseguridad',
+      messages: [],
+      completed: false
+    };
+  }
+
+  function saveStoryState(st) {
+    localStorage.setItem(STORY_STORAGE_KEY, JSON.stringify(st));
+  }
+
+  let storyState = loadStoryState();
+
+  const storyModalOverlay = document.getElementById('story-modal-overlay');
+  const storyBtn = document.getElementById('story-btn');
+  const closeStoryBtn = document.getElementById('close-story-btn');
+  const restartStoryBtn = document.getElementById('restart-story-btn');
+  const storyGoalInput = document.getElementById('story-goal-input');
+  const applyStoryGoalBtn = document.getElementById('apply-story-goal-btn');
+  const storyPhaseNameEl = document.getElementById('story-phase-name');
+  const storyProgressTextEl = document.getElementById('story-progress-text');
+  const storyChatBody = document.getElementById('story-chat-body');
+  const storyChoicesContainer = document.getElementById('story-choices-container');
+
+  function openStoryModal() {
+    if (storyGoalInput) storyGoalInput.value = storyState.goal || 'Aprender Hacking Ético y Ciberseguridad';
+    if (storyState.messages.length === 0) {
+      initStoryChapter();
+    } else {
+      renderStoryUI();
+    }
+    if (storyModalOverlay) storyModalOverlay.classList.add('active');
+  }
+
+  function closeStoryModal() {
+    if (storyModalOverlay) storyModalOverlay.classList.remove('active');
+  }
+
+  storyBtn?.addEventListener('click', openStoryModal);
+  closeStoryBtn?.addEventListener('click', closeStoryModal);
+  storyModalOverlay?.addEventListener('click', (e) => {
+    if (e.target === storyModalOverlay) closeStoryModal();
+  });
+
+  restartStoryBtn?.addEventListener('click', () => {
+    if (confirm('🔄 ¿Deseas reiniciar tu Viaje del Héroe desde el Capítulo 1?')) {
+      storyState.phaseIndex = 0;
+      storyState.completed = false;
+      storyState.messages = [];
+      saveStoryState(storyState);
+      initStoryChapter();
+    }
+  });
+
+  applyStoryGoalBtn?.addEventListener('click', () => {
+    const newGoal = storyGoalInput.value.trim();
+    if (newGoal) {
+      storyState.goal = newGoal;
+      saveStoryState(storyState);
+      showToast('🎯 Lore ajustado a: ' + newGoal);
+      initStoryChapter();
+    }
+  });
+
+  async function initStoryChapter() {
+    const currentPhase = STORY_PHASES[storyState.phaseIndex] || STORY_PHASES[0];
+    const goal = storyState.goal || 'Tu Meta de Vida';
+
+    storyChatBody.innerHTML = '';
+    storyChoicesContainer.innerHTML = '<div style="color:#88a0b0; font-size:0.8rem;">⌛ El Arquetipo está generando el escenario de tu misión...</div>';
+
+    storyPhaseNameEl.textContent = currentPhase.name;
+    storyProgressTextEl.textContent = `Capítulo ${currentPhase.num} / 6`;
+
+    // Prompt dinámico para la escena del capítulo
+    const scenePrompt = `
+    Eres ${currentPhase.archetype}, uno de los 9 Arquetipos de Morp-ios en la simulación del Viaje del Héroe.
+    El héroe (el usuario) busca alcanzar la meta: "${goal}".
+    Estamos en la Fase ${currentPhase.num}: "${currentPhase.name}" (${currentPhase.title}).
+    
+    Genera una breve escena interactiva en JSON con la siguiente estructura exacta:
+    {
+      "archetypeMessage": "Mensaje en primera persona introduciendo la prueba o dilema de esta fase para dominar ${goal}.",
+      "options": [
+        { "id": "A", "text": "Opción A: Decisión estratégica o audaz", "outcome": "Respuesta al tomar A", "isCorrect": true },
+        { "id": "B", "text": "Opción B: Decisión prudente o analítica", "outcome": "Respuesta al tomar B", "isCorrect": true },
+        { "id": "C", "text": "Opción C: Decisión impulsiva o dudosa", "outcome": "Respuesta al tomar C", "isCorrect": false }
+      ]
+    }
+    Responde ÚNICAMENTE en JSON válido.
+    `;
+
+    try {
+      let chapterData = null;
+      if (GEMINI_API_KEY) {
+        const payload = {
+          system_instruction: { parts: [{ text: 'Eres el motor de lore interactivo en JSON para Morp-ios.' }] },
+          contents: [{ role: 'user', parts: [{ text: scenePrompt }] }],
+          generationConfig: { temperature: 0.7, responseMimeType: 'application/json' }
+        };
+
+        const res = await fetch(getGeminiUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJson) chapterData = JSON.parse(rawJson);
+      }
+
+      // Fallback local si no hay API Key o falla red
+      if (!chapterData) {
+        chapterData = {
+          archetypeMessage: `¡Bienvenido al Capítulo ${currentPhase.num}! Soy ${currentPhase.archetype}. Tu desafío hoy para dominar "${goal}" es superar la inercia inicial y tomar el control del Constructo.`,
+          options: [
+            { id: 'A', text: 'Acepto la prueba con enfoque y disciplina radical.', outcome: '¡Excelente decisión! Sintonizas el flujo del Tao y avanzas sin fricción.', isCorrect: true },
+            { id: 'B', text: 'Analizo los patrones antes de ejecutar mi primer movimiento.', outcome: 'Tu prudencia te da claridad. Estructuras la arquitectura con maestría.', isCorrect: true },
+            { id: 'C', text: 'Postergo la prueba para cuando me sienta más preparado.', outcome: 'El miedo a la imperfección es una ilusión del ego. Reencuadra y vuelve a intentar.', isCorrect: false }
+          ]
+        };
+      }
+
+      storyState.currentChapterData = chapterData;
+      storyState.messages = [{ sender: currentPhase.archetype, text: chapterData.archetypeMessage, type: 'archetype' }];
+      saveStoryState(storyState);
+
+      renderStoryUI();
+
+    } catch (e) {
+      console.error(e);
+      storyChoicesContainer.innerHTML = '<div style="color:#ff5252;">⚠️ Error cargando fase. Verifica tu conexión o reintenta.</div>';
+    }
+  }
+
+  function renderStoryUI() {
+    const currentPhase = STORY_PHASES[storyState.phaseIndex] || STORY_PHASES[0];
+    storyPhaseNameEl.textContent = currentPhase.name;
+    storyProgressTextEl.textContent = `Capítulo ${currentPhase.num} / 6`;
+
+    storyChatBody.innerHTML = '';
+    storyState.messages.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = `story-msg ${msg.type === 'hero' ? 'hero-msg' : 'archetype-msg'}`;
+      div.innerHTML = `
+        <div class="story-msg-sender">${msg.type === 'hero' ? '👤 Héroe (Tú)' : `⏣ ${msg.sender}`}</div>
+        <div>${msg.text}</div>
+      `;
+      storyChatBody.appendChild(div);
+    });
+    storyChatBody.scrollTop = storyChatBody.scrollHeight;
+
+    storyChoicesContainer.innerHTML = '';
+
+    if (storyState.completed) {
+      const winCard = document.createElement('div');
+      winCard.style.color = '#00ff87';
+      winCard.style.fontWeight = 'bold';
+      winCard.style.textAlign = 'center';
+      winCard.style.padding = '10px';
+      winCard.innerHTML = `🎉 ¡HAS COMPLETADO EL VIAJE DEL HÉROE PARA DOMINAR "${storyState.goal.toUpperCase()}"!<br><span style="font-size:0.8rem; font-weight:normal; color:#ffffff;">Eres un Soberano Cognitivo. ¡Puedes reiniciar la historia con una nueva meta!</span>`;
+      storyChoicesContainer.appendChild(winCard);
+      return;
+    }
+
+    const cData = storyState.currentChapterData;
+    if (cData && cData.options) {
+      cData.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'story-choice-btn';
+        btn.innerHTML = `<span>⚡</span> <span>${opt.text}</span>`;
+        btn.addEventListener('click', () => handleStoryChoice(opt));
+        storyChoicesContainer.appendChild(btn);
+      });
+    }
+  }
+
+  function handleStoryChoice(opt) {
+    const currentPhase = STORY_PHASES[storyState.phaseIndex] || STORY_PHASES[0];
+    
+    // Push Hero selection
+    storyState.messages.push({ sender: 'Héroe', text: opt.text, type: 'hero' });
+
+    // Push Archetype Outcome
+    storyState.messages.push({ sender: currentPhase.archetype, text: opt.outcome, type: 'archetype' });
+
+    if (opt.isCorrect) {
+      addXP(150, `Capítulo ${currentPhase.num} Superado`);
+      playGlitchSFX();
+
+      if (storyState.phaseIndex < STORY_PHASES.length - 1) {
+        storyState.phaseIndex += 1;
+        saveStoryState(storyState);
+        setTimeout(() => {
+          initStoryChapter();
+        }, 1200);
+      } else {
+        storyState.completed = true;
+        unlockStamp('matrix_1');
+        unlockTrophy('trophy_constructo');
+        unlockTitle('Tejedor de Realidades');
+        saveStoryState(storyState);
+        renderStoryUI();
+      }
+    } else {
+      showToast('⚠️ Elección errónea. Reencuadra y selecciona otra vía.');
+      saveStoryState(storyState);
+      renderStoryUI();
+    }
+  }
+
+  // Inicialización UI y estado
+  updateSubnameUI();
+  restoreHistory();
+  showWelcomeMessage();
+  updateStatus();
+</script>
+</body>
+</html>
